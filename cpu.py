@@ -142,10 +142,14 @@ class CPU:
         """Run the CPU."""
         
         self.reg[7] = 0xF4
+        
         # After loading a program, we want to run it.
         running = True
         
         while running == True:
+            
+            
+
             instruction = self.ram_read(self.pc)
             self.ir = instruction
             
@@ -160,8 +164,16 @@ class CPU:
                 [immediate value]
                 """
 
+                
+
                 register_num = self.ram_read(self.pc + 1)
                 value = self.ram_read(self.pc + 2)
+
+                ## Trouble shooting code
+                # print("\nLDI")
+                # print("PC\t", self.pc)
+                # print("Reg\t" + ' R' + str(register_num))
+                # print("Value\t", value)
 
                 self.reg[register_num] = value
                 self.pc += self.pc_increment(instruction)
@@ -282,6 +294,66 @@ class CPU:
                 self.pc = return_address
 
 
+            ### JUMP Instructions
+            # JMP
+            elif instruction == 0b01010100:
+                """
+                `JMP register`
+                Jump to the address stored in the given register.
+                Set the `PC` to the address stored in the given register.
+
+                [command] = 01010100
+                [register]
+                """
+                # Get address/index for where the desired PC value is stored
+                register_num = self.ram_read(self.pc + 1)
+
+                # Set PC to that value
+                self.pc = self.reg[register_num]
+
+            # JEQ
+            elif instruction == 0b01010101:
+                """
+                `JEQ register`
+                If `equal` flag is set (true), jump to the address stored in the given register.
+
+                [command] = 01010101
+                [register]
+                """
+                # Get address/index for where the desired PC value is stored
+                register_num = self.ram_read(self.pc + 1)
+                
+                # Flag format is 00000LGE
+                # Check if flag is set to "Equals"
+                if self.fl & 0b00000001:
+                    self.pc = self.reg[register_num]
+                
+                else:
+                    self.pc += self.pc_increment(instruction)
+
+            # JNE
+            elif instruction == 0b01010110:
+                """
+                `JNE register`
+                If `E` flag is clear (false, 0), jump to the address stored in the given
+                register.
+
+                [command] = 01010110
+                [register]
+                """
+                # Get address/index for where the desired PC value is stored
+                register_num = self.ram_read(self.pc + 1)
+
+                # Flag format is 00000LGE
+                # To do this bitwise, need to either shift bits then use XOR
+                # Or use 2 bitwise comparisons (one for G and one for L)
+                if self.fl != 0b00000001:
+                    self.pc = self.reg[register_num]
+                
+                else:
+                    self.pc += self.pc_increment(instruction)
+
+
             ### ALU Operations
             # ADD
             elif instruction == 0b10100000:
@@ -374,70 +446,23 @@ class CPU:
                 # print("\nNew flag ", new_flag, format(new_flag, ' 08b'))
 
                 # use bitwise OR to set self.fl = new_flag
-                self.fl = self.fl | new_flag
+                #self.fl = self.fl | new_flag
+                self.fl = new_flag
                 
                 # print("\nAFTER")
                 # print("self.fl  ", self.fl, format(self.fl, ' 08b'))
                 # return 
 
+                ## Trouble shooting code
+                # print('\nCMP')
+                # print("PC\t", self.pc)
+                # #print("Reg A", register_num_A, " Reg B", register_num_B)
+                # #print("Reg A", format(register_num_A, '08b'), "Reg B", format(register_num_B, '08b'))
+                # print("R" + str(register_num_A), 'vs.', 'R' + str(register_num_B))
+                
+                # print("LGE")
+                # print(format(self.fl, '08b'))
+
                 self.pc += self.pc_increment(instruction)
             
 
-            ### JUMP Instructions
-            # JMP
-            elif instruction == 0b01010100:
-                """
-                `JMP register`
-                Jump to the address stored in the given register.
-                Set the `PC` to the address stored in the given register.
-
-                [command] = 01010100
-                [register]
-                """
-                # Get address/index for where the desired PC value is stored
-                register_num = self.ram_read(self.pc + 1)
-
-                # Set PC to that value
-                self.pc = self.reg[register_num]
-
-            # JEQ
-            elif instruction == 0b01010101:
-                """
-                `JEQ register`
-                If `equal` flag is set (true), jump to the address stored in the given register.
-
-                [command] = 01010101
-                [register]
-                """
-                # Get address/index for where the desired PC value is stored
-                register_num = self.ram_read(self.pc + 1)
-                
-                # Flag format is 00000LGE
-                # Check if flag is set to "Equals"
-                if self.fl & 0b00000001:
-                    self.pc = self.reg[register_num]
-                
-                else:
-                    self.pc += self.pc_increment(instruction)
-
-            # JNE
-            elif instruction == 0b01010110:
-                """
-                `JNE register`
-                If `E` flag is clear (false, 0), jump to the address stored in the given
-                register.
-
-                [command] = 01010110
-                [register]
-                """
-                # Get address/index for where the desired PC value is stored
-                register_num = self.ram_read(self.pc + 1)
-
-                # Flag format is 00000LGE
-                # To do this bitwise, need to either shift bits then use XOR
-                # Or use 2 bitwise comparisons (one for G and one for L)
-                if self.fl != 0b00000001:
-                    self.pc = self.reg[register_num]
-                
-                else:
-                    self.pc += self.pc_increment(instruction)
