@@ -9,7 +9,7 @@ class CPU:
         """Construct a new CPU."""
         self.reg = [0] * 8      # General Purpose Registers
         self.ram = [0] * 256    # RAM
-        self.sp = self.reg[7]  # Stack Pointer
+        self.sp = self.reg[7]   # Stack Pointer
         
         # Internal Registers
         self.pc = 0             # Program Counter
@@ -73,7 +73,7 @@ class CPU:
             return A * B
 
         elif op == "DIV":
-            return A / B
+            return A // B
 
         elif op == 'MOD':
             if B == 0:
@@ -116,6 +116,7 @@ class CPU:
         else:
             raise Exception("Unsupported ALU operation")
 
+
     def trace(self):
         """
         Handy function to print out the CPU state. You might want to call this
@@ -139,6 +140,7 @@ class CPU:
 
     def ram_read(self, address):
         return self.ram[address]
+
 
     def ram_write(self, address, value):
         self.ram[address] = value
@@ -182,12 +184,10 @@ class CPU:
                 LDI register immediate
                 Set the value of a register to an integer.
 
-                [command] = 0b10000010
+                [command] = 10000010
                 [register number]
                 [immediate value]
                 """
-
-                
 
                 register_num = self.ram_read(self.pc + 1)
                 value = self.ram_read(self.pc + 2)
@@ -207,7 +207,7 @@ class CPU:
                 `PRN register` pseudo-instruction
                 Print numeric value stored in the given register.
 
-                [command] = 0b01000111
+                [command] = 01000111
                 [register number]
                 """
                 register_num = self.ram_read(self.pc + 1)
@@ -221,7 +221,7 @@ class CPU:
                 `HLT`
                 Halt the CPU (and exit the emulator).
 
-                [command] = 0b00000001
+                [command] = 00000001
                 """
                 running = False
             
@@ -301,7 +301,6 @@ class CPU:
                 subroutine_PC = self.reg[register_num]
                 self.pc = subroutine_PC
 
-                
             # RET
             elif instruction == 0b00010001:
                 """
@@ -388,12 +387,13 @@ class CPU:
                 [register A]
                 [Register B]
                 """
-                # 
+                # Get index for Reg A and for Reg B
                 register_num_A = self.ram_read(self.pc + 1)
                 register_num_B = self.ram_read(self.pc + 2)
-                product = self.alu('ADD', register_num_A, register_num_B)
+
+                sum = self.alu('ADD', register_num_A, register_num_B)
                 
-                self.reg[register_num_A] = product
+                self.reg[register_num_A] = sum
                 self.pc += self.pc_increment(instruction)
             
             # MUL
@@ -417,15 +417,20 @@ class CPU:
             elif instruction == 0b10100001:
                 """
                 `SUB registerA registerB`
-
                 Subtract the value in the second register from the first, storing the
                 result in registerA.
 
-                Machine code:
-                ```
-                10100001 00000aaa 00000bbb
+                [command] = 10100001
+                [register A]
+                [Register B]
                 """
-                pass
+                register_num_A = self.ram_read(self.pc + 1)
+                register_num_B = self.ram_read(self.pc + 2)
+
+                result = self.alu('SUB', register_num_A, register_num_B)
+                
+                self.reg[register_num_A] = result
+                self.pc += self.pc_increment(instruction)
             
             # DIV
             elif instruction == 0b10100011:
@@ -436,11 +441,17 @@ class CPU:
                 If the value in the second register is 0, the system should print an
                 error message and halt.
 
-                Machine code:
-                ```
-                10100011 00000aaa 00000bbb
+                [command] = 10100011
+                [register A]
+                [Register B]
                 """
-                pass
+                register_num_A = self.ram_read(self.pc + 1)
+                register_num_B = self.ram_read(self.pc + 2)
+                
+                result = self.alu('DIV', register_num_A, register_num_B)
+                
+                self.reg[register_num_A] = result
+                self.pc += self.pc_increment(instruction)
             
             # MOD
             elif instruction == 0b10100100:
@@ -507,6 +518,8 @@ class CPU:
 
                 self.pc += self.pc_increment(instruction)
             
+
+            ### ALU Bitwise Operations
             # AND
             elif instruction == 0b10101000:
                 """
@@ -532,7 +545,7 @@ class CPU:
                 """
                 `OR registerA registerB`
 
-                [command] = 
+                [command] = 10101010
                 [register number A]
                 [register number B]
                 """
@@ -564,7 +577,6 @@ class CPU:
 
                 self.pc += self.pc_increment(instruction)
                 
-
             # NOT
             elif instruction == 0b01101001:
                 """
@@ -620,4 +632,32 @@ class CPU:
                 self.pc += self.pc_increment(instruction)
                 
 
+            ### Stretch (ADDI and Interrupts)
+            # ADDI
+            elif instruction == 0b10001111:
+                """
+                Stretch: Add an ADDI extension instruction to add an immediate value to a register
+
+                ADDI Register 
+
+                [command] = 10001111
+                [register number]
+                [immediate value]
+
+                Side note: 
+                For the machine code instruction identifier, I just choose and ID that
+                wasn't likely to be taken. Doesn't have to be 1111.
+                """
                 
+                # Get the index for the register
+                register_num = self.ram_read(self.pc + 1)
+
+                # Get the value from memory
+                value = self.ram_read(self.pc + 2)
+
+                # Add value to register's value
+                self.reg[register_num] += value
+
+                self.pc += self.pc_increment(instruction)
+
+            
