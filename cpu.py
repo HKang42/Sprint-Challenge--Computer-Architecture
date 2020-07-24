@@ -165,8 +165,7 @@ class CPU:
 
                 self.reg[register_num] = value
                 self.pc += self.pc_increment(instruction)
-                
-
+            
             # PRN
             elif instruction == 0b01000111:
                 """
@@ -383,6 +382,8 @@ class CPU:
 
                 self.pc += self.pc_increment(instruction)
             
+
+            ### JUMP Instructions
             # JMP
             elif instruction == 0b01010100:
                 """
@@ -398,3 +399,45 @@ class CPU:
 
                 # Set PC to that value
                 self.pc = self.reg[register_num]
+
+            # JEQ
+            elif instruction == 0b01010101:
+                """
+                `JEQ register`
+                If `equal` flag is set (true), jump to the address stored in the given register.
+
+                [command] = 01010101
+                [register]
+                """
+                # Get address/index for where the desired PC value is stored
+                register_num = self.ram_read(self.pc + 1)
+                
+                # Flag format is 00000LGE
+                # Check if flag is set to "Equals"
+                if self.fl & 0b00000001:
+                    self.pc = self.reg[register_num]
+                
+                else:
+                    self.pc += self.pc_increment(instruction)
+
+            # JNE
+            elif instruction == 0b01010110:
+                """
+                `JNE register`
+                If `E` flag is clear (false, 0), jump to the address stored in the given
+                register.
+
+                [command] = 01010110
+                [register]
+                """
+                # Get address/index for where the desired PC value is stored
+                register_num = self.ram_read(self.pc + 1)
+
+                # Flag format is 00000LGE
+                # To do this bitwise, need to either shift bits then use XOR
+                # Or use 2 bitwise comparisons (one for G and one for L)
+                if self.fl != 0b00000001:
+                    self.pc = self.reg[register_num]
+                
+                else:
+                    self.pc += self.pc_increment(instruction)
