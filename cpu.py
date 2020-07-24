@@ -14,6 +14,8 @@ class CPU:
         # Internal Registers
         self.pc = 0             # Program Counter
         self.ir = 0b00000001    # Instruction register (defaults to halt)
+        self.fl = 0b00000000    # Flags (format is 00000LGE)
+
 
     def load(self):
         """Load a program into memory."""
@@ -49,12 +51,34 @@ class CPU:
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
+        ### Arithmetic Operations
         if op == "ADD":
             return self.reg[reg_a] + self.reg[reg_b]
-        #elif op == "SUB": etc
+        
+        elif op == "SUB":
+            return self.reg[reg_a] - self.reg[reg_b]
 
         elif op == 'MUL':
             return self.reg[reg_a] * self.reg[reg_b]
+
+        elif op == "DIV":
+            return self.reg[reg_a] / self.reg[reg_b]
+
+        ### Comparison Operations
+        elif op == 'CMP':
+            A = self.reg[reg_a]
+            B = self.reg[reg_b]
+            
+            # 00000LGE
+            if A == B:
+                return 0b00000001
+            
+            elif A > B:
+                return 0b00000010
+
+            elif A < B:
+                return 0b00000100
+
 
         else:
             raise Exception("Unsupported ALU operation")
@@ -159,6 +183,7 @@ class CPU:
                 """
                 running = False
             
+
             ### Stack Operations
             # PUSH
             elif instruction == 0b01000101:
@@ -250,7 +275,7 @@ class CPU:
                 self.pc = return_address
 
 
-            ### Arithmetic Operations
+            ### ALU Operations
             # ADD
             elif instruction == 0b10100000:
                 """
@@ -274,9 +299,9 @@ class CPU:
                 `MUL registerA registerB`
                 Multiply the values in two registers together and store the result in registerA.
 
-                [command] = 0b10100010
+                [command] = 10100010
                 [register number A]
-                [register number A]
+                [register number B]
                 """
                 register_num_A = self.ram_read(self.pc + 1)
                 register_num_B = self.ram_read(self.pc + 2)
@@ -300,7 +325,7 @@ class CPU:
                 pass
             
             # DIV
-            elif instruction == 10100011:
+            elif instruction == 0b10100011:
                 """
                 `DIV registerA registerB`
                 Divide the value in the first register by the value in the second,
@@ -313,3 +338,36 @@ class CPU:
                 10100011 00000aaa 00000bbb
                 """
                 pass
+            
+            # CMP
+            elif instruction == 0b10100111:
+                """
+                CMP registerA registerB
+
+                Compare the values in two registers.
+                If they are equal, set the Equal E flag to 1, otherwise set it to 0.
+                If registerA is less than registerB, set the Less-than L flag to 1, otherwise set it to 0.
+                If registerA is greater than registerB, set the Greater-than G flag to 1, otherwise set it to 0.
+                
+                [command] = 10100111
+                [register number A]
+                [register number B]
+                """
+
+                register_num_A = self.ram_read(self.pc + 1)
+                register_num_B = self.ram_read(self.pc + 2)
+
+                # Flag format is 00000LGE
+                new_flag = self.alu('CMP', register_num_A, register_num_B)
+
+                # print("Before")
+                # print("self.fl  ", self.fl, format(self.fl, ' 08b'))
+
+                # print("\nNew flag ", new_flag, format(new_flag, ' 08b'))
+
+                # use bitwise OR to 
+                self.fl = self.fl | new_flag
+                
+                # print("\nAFTER")
+                # print("self.fl  ", self.fl, format(self.fl, ' 08b'))
+                # return 
