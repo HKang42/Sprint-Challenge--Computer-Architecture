@@ -58,25 +58,31 @@ class CPU:
             Call: self.alu('ADD', 00000000, 00000001)
             Return: register[00000000] + register[00000001]
         """
+        
+        A = self.reg[reg_a]
+        B = self.reg[reg_b]
 
         ### Arithmetic Operations
         if op == "ADD":
-            return self.reg[reg_a] + self.reg[reg_b]
+            return A + B
         
         elif op == "SUB":
-            return self.reg[reg_a] - self.reg[reg_b]
+            return A - B
 
         elif op == 'MUL':
-            return self.reg[reg_a] * self.reg[reg_b]
+            return A * B
 
         elif op == "DIV":
-            return self.reg[reg_a] / self.reg[reg_b]
+            return A / B
+
+        elif op == 'MOD':
+            if B == 0:
+                raise ValueError("Division by 0")
+            return A % B
 
         ### Comparison Operations
         elif op == 'CMP':
-            A = self.reg[reg_a]
-            B = self.reg[reg_b]
-            
+
             # 00000LGE
             if A == B:
                 return 0b00000001
@@ -87,6 +93,25 @@ class CPU:
             elif A < B:
                 return 0b00000100
 
+
+        ### Bitwise Operations
+        elif op == 'AND':
+            return A & B
+
+        elif op == 'OR':
+            return A | B
+
+        elif op == 'XOR':
+            return A ^ B
+
+        elif op == 'NOT':
+            return 0b11111111 - A
+
+        elif op == 'SHL':
+            return A << B
+
+        elif op == 'SHR':
+            return A >> B
 
         else:
             raise Exception("Unsupported ALU operation")
@@ -148,8 +173,6 @@ class CPU:
         
         while running == True:
             
-            
-
             instruction = self.ram_read(self.pc)
             self.ir = instruction
             
@@ -419,6 +442,25 @@ class CPU:
                 """
                 pass
             
+            # MOD
+            elif instruction == 0b10100100:
+                """
+                `MOD registerA registerB`
+
+                [command] = 10100100
+                [register number A]
+                [register number B]
+                """
+            
+                register_num_A = self.ram_read(self.pc + 1)
+                register_num_B = self.ram_read(self.pc + 2)
+
+                result = self.alu('MOD', register_num_A, register_num_B)
+
+                self.reg[register_num_A] = result
+
+                self.pc += self.pc_increment(instruction)
+
             # CMP
             elif instruction == 0b10100111:
                 """
@@ -465,4 +507,117 @@ class CPU:
 
                 self.pc += self.pc_increment(instruction)
             
+            # AND
+            elif instruction == 0b10101000:
+                """
+                `AND registerA registerB`
+                Bitwise-AND the values in registerA and registerB, then store the result in
+                registerA.
 
+                [command] = 
+                [register number A]
+                [register number B]
+                """
+                register_num_A = self.ram_read(self.pc + 1)
+                register_num_B = self.ram_read(self.pc + 2)
+
+                result = self.alu('AND', register_num_A, register_num_B)
+
+                self.reg[register_num_A] = result
+
+                self.pc += self.pc_increment(instruction)
+
+            # OR
+            elif instruction == 0b10101010:
+                """
+                `OR registerA registerB`
+
+                [command] = 
+                [register number A]
+                [register number B]
+                """
+
+                register_num_A = self.ram_read(self.pc + 1)
+                register_num_B = self.ram_read(self.pc + 2)
+
+                result = self.alu('OR', register_num_A, register_num_B)
+
+                self.reg[register_num_A] = result
+
+                self.pc += self.pc_increment(instruction)
+            
+            # XOR
+            elif instruction == 0b10101011:
+                """
+                `XOR registerA registerB`
+
+                [command] = 10101011
+                [register number A]
+                [register number B]
+                """
+                register_num_A = self.ram_read(self.pc + 1)
+                register_num_B = self.ram_read(self.pc + 2)
+
+                result = self.alu('XOR', register_num_A, register_num_B)
+
+                self.reg[register_num_A] = result
+
+                self.pc += self.pc_increment(instruction)
+                
+
+            # NOT
+            elif instruction == 0b01101001:
+                """
+                `NOT register`
+
+                [command] = 01101001
+                [register number A]
+                """
+                register_num_A = self.ram_read(self.pc + 1)
+
+                # 3rd argument isn't used by the ALU for NOT
+                # Can insert any valid register
+                result = self.alu('NOT', register_num_A, register_num_A)
+
+                self.reg[register_num_A] = result
+                
+                self.pc += self.pc_increment(instruction)
+
+            # SHL
+            elif instruction == 0b10101100:
+                """
+                `SHL registerA registerB`
+
+                [command] = 10101100
+                [register number A]
+                [register number B]
+                """
+                register_num_A = self.ram_read(self.pc + 1)
+                register_num_B = self.ram_read(self.pc + 2)
+
+                result = self.alu('SHL', register_num_A, register_num_B)
+
+                self.reg[register_num_A] = result
+
+                self.pc += self.pc_increment(instruction)
+                
+            # SHR 
+            elif instruction == 0b10101101:
+                """
+                `SHR registerA registerB`
+
+                [command] = 10101101
+                [register number A]
+                [register number B]
+                """
+                register_num_A = self.ram_read(self.pc + 1)
+                register_num_B = self.ram_read(self.pc + 2)
+
+                result = self.alu('SHR', register_num_A, register_num_B)
+
+                self.reg[register_num_A] = result
+
+                self.pc += self.pc_increment(instruction)
+                
+
+                
