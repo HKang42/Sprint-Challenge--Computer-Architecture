@@ -49,7 +49,15 @@ class CPU:
 
 
     def alu(self, op, reg_a, reg_b):
-        """ALU operations."""
+        """
+        ALU operations.
+        Given an operation and the address/index number for 2 registers,
+        perform the requested operation between the 2 values stored in the resgisters.
+
+        Ex:
+            Call: self.alu('ADD', 00000000, 00000001)
+            Return: register[00000000] + register[00000001]
+        """
 
         ### Arithmetic Operations
         if op == "ADD":
@@ -286,6 +294,7 @@ class CPU:
                 [register A]
                 [Register B]
                 """
+                # 
                 register_num_A = self.ram_read(self.pc + 1)
                 register_num_B = self.ram_read(self.pc + 2)
                 product = self.alu('ADD', register_num_A, register_num_B)
@@ -365,9 +374,27 @@ class CPU:
 
                 # print("\nNew flag ", new_flag, format(new_flag, ' 08b'))
 
-                # use bitwise OR to 
+                # use bitwise OR to set self.fl = new_flag
                 self.fl = self.fl | new_flag
                 
                 # print("\nAFTER")
                 # print("self.fl  ", self.fl, format(self.fl, ' 08b'))
                 # return 
+
+                self.pc += self.pc_increment(instruction)
+            
+            # JMP
+            elif instruction == 0b01010100:
+                """
+                `JMP register`
+                Jump to the address stored in the given register.
+                Set the `PC` to the address stored in the given register.
+
+                [command] = 01010100
+                [register]
+                """
+                # Get address/index for where the desired PC value is stored
+                register_num = self.ram_read(self.pc + 1)
+
+                # Set PC to that value
+                self.pc = self.reg[register_num]
